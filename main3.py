@@ -48,13 +48,32 @@ for VideoIndex in range(1):
     end_flag = 1
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = my.MyCNN().to(device)
-    model.load_state_dict(torch.load('my_model_new.pth'))
-    model.eval()
-    cap = cv2.VideoCapture("./video/23.4.12/1.mov")
-    csvfile = open(f"./1.mov-fast.csv", "w", encoding="UTF-8")
-    lomy_list = np.load('1-100.npy')
-    lomy_list2 = np.load('1-10.npy')
-    lomy_list3 = np.load('1-1.npy')
+
+
+    path1_model_path = './my_model_new.pth'
+    path2_video_path = "./video/23.4.12/2.mov"
+    path3_videosave_path = './save_demo.avi'
+    path4_csvsave_path = "./2.mov-fast.csv"
+
+    path5_num100_path = './2-100.npy'
+    path6_num10_path = './2-10.npy'
+    path7_num1_path = './2-1.npy'
+
+
+
+
+
+
+
+    
+    model.load_state_dict(torch.load(path1_model_path))
+    cap = cv2.VideoCapture(path2_video_path)
+    out_origin_ = cv2.VideoWriter(path3_videosave_path,cv2.VideoWriter_fourcc(*'XVID'), 30.0,
+                                       (int(cap.get(4)), int(cap.get(3))), True)
+    csvfile = open(path4_csvsave_path, "w", encoding="UTF-8")
+    lomy_list = np.load(path5_num100_path)
+    lomy_list2 = np.load(path6_num10_path)
+    lomy_list3 = np.load(path7_num1_path)
     print(lomy_list)
     print(lomy_list)
     print(lomy_list)
@@ -69,7 +88,7 @@ for VideoIndex in range(1):
             break
 
         frame_num = frame_num+1
-        if frame_num % 1 ==0:
+        if frame_num % 30 ==0:
             frame = cv2.transpose(frame)
             frame = cv2.flip(frame, 1)
             frame = cv2.medianBlur(frame, 3)  # 奇数
@@ -91,7 +110,7 @@ for VideoIndex in range(1):
             data_to_process = torch.cat([data_to_process_100, data_to_process_10, data_to_process_1], dim=0)
 
             data = data_to_process.to(torch.float32).to(device)
-
+            model.eval()
             output = model(data)
             pred = output.argmax(dim=1, keepdim=True).cpu().numpy()
             result = pred[0,0]+pred[1,0]/10+pred[2,0]/100
@@ -103,12 +122,14 @@ for VideoIndex in range(1):
             cv2.putText(frame, f"{pred[2,0]}", (lomy_list3[0][0], lomy_list3[0][1]), 2, 1, (255,255,0), 2)
             cv2.putText(frame, f"{int(frame_num/30)}", (30,30), 2, 1, (255,0,0), 2)
             writer.writerows([[frame_num, result]])
-
+            out_origin_.write(frame)
             cv2.imshow(f"{VideoIndex}bin", frame)
             cv2.imshow(f"{VideoIndex}bin_100", bin_100)
             cv2.imshow(f"{VideoIndex}bin_10", bin_10)
             cv2.imshow(f"{VideoIndex}bin_1", bin_1)
-            cv2.waitKey(1)
+            key = cv2.waitKey(1)
+            if key == 27:
+                break
     csvfile.close()
 
 
